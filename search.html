@@ -53,7 +53,7 @@
   #autocomplete-list li:hover,
   #autocomplete-list li.selected {
     background-color: #add8e6;
-    color: black;
+    color: black; 
   }
   .hidden {
     display: none;
@@ -106,7 +106,7 @@
       item.name.toLowerCase().includes(query)
     );
     displaySuggestions(filteredSuggestions);
-
+    
     if (filteredSuggestions.length > 0) {
       currentFocus = 0;
       const items = autocompleteList.querySelectorAll('li');
@@ -152,7 +152,7 @@
       searchInput.dispatchEvent(new Event('input'));
     }
   });
-
+  
   window.addEventListener('pageshow', function (event) {
     if (event.persisted) {
       searchInput.value = '';
@@ -215,6 +215,12 @@
         if (name && href) {
             if (!href.startsWith('http://') && !href.startsWith('https://')) {
                 alert('URL must start with http:// or https://');
+                return;
+            }
+
+            const validSuffixes = ['.com', '.net', '.org', '.gov', '.edu'];
+            if (!validSuffixes.some(suffix => href.endsWith(suffix))) {
+                alert('URL must end with a valid domain (e.g., .com, .net, .org, .gov, .edu)');
                 return;
             }
 
