@@ -53,7 +53,7 @@
   #autocomplete-list li:hover,
   #autocomplete-list li.selected {
     background-color: #add8e6;
-    color: black; 
+    color: black;
   }
   .hidden {
     display: none;
@@ -86,6 +86,7 @@
     <input type="text" id="href-input" placeholder="e.g., https://www.cnn.com">
     <br><br>
     <button id="copy-button">Copy to Clipboard</button>
+    <button id="clear-button">Clear</button>
 </div>
 
 <script src="suggestion.js"></script>
@@ -106,7 +107,7 @@
       item.name.toLowerCase().includes(query)
     );
     displaySuggestions(filteredSuggestions);
-    
+
     if (filteredSuggestions.length > 0) {
       currentFocus = 0;
       const items = autocompleteList.querySelectorAll('li');
@@ -152,7 +153,7 @@
       searchInput.dispatchEvent(new Event('input'));
     }
   });
-  
+
   window.addEventListener('pageshow', function (event) {
     if (event.persisted) {
       searchInput.value = '';
@@ -207,6 +208,12 @@
     const nameInput = document.getElementById('name-input');
     const hrefInput = document.getElementById('href-input');
     const copyButton = document.getElementById('copy-button');
+    const clearButton = document.getElementById('clear-button');
+
+    clearButton.addEventListener('click', () => {
+        nameInput.value = '';
+        hrefInput.value = '';
+    });
 
     copyButton.addEventListener('click', () => {
         const name = nameInput.value;
