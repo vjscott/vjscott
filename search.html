@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Autocomplete Search</title>
+
+<style>
+  body {
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center content horizontally */
+    padding-top: 50px;
+    min-height: 100vh;
+    margin: 0;
+    background-color: black;
+    font-family: sans-serif;
+  }
+  #search-container {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  #search-input {
+    padding: 5px;
+    font-size: 20px;
+    width: 300px;
+    color: red;
+    background-color: white;
+    text-align: center;
+  }
+  #autocomplete-list {
+    list-style-type: none;
+    padding: 1px;
+    margin: 1px;
+    border: 10px solid ;
+    border-top: none;
+    border-radius: 5px;
+    width: 300px;
+    position: absolute;
+    z-index: 1;
+    background-color: white;
+  }
+  #autocomplete-list li {
+    padding: 10px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    color: blue;
+    font-family: "Comic Sans MS";
+    border-bottom: 1px solid blue;
+  }
+  #autocomplete-list li:last-child {
+    border-bottom: none;
+  }
+  #autocomplete-list li:hover,
+  #autocomplete-list li.selected {
+    background-color: #add8e6;
+    color: black;
+  }
+  .hidden {
+    display: none;
+  }
+  #suggestion-form {
+      color: white;
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid white;
+      border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+
+<div id="search-container">
+	<input type="text" id="search-input" placeholder="Search...">
+  <ul id="autocomplete-list" class="hidden">
+  </ul>
+</div>
+
+<hr style="width:50%; margin-top: 40px; margin-bottom: 40px;">
+
+<div id="suggestion-form">
+    <h3>Add New Suggestion</h3>
+    <label for="name-input">Name:</label>
+    <input type="text" id="name-input" placeholder="e.g., CNN">
+    <br><br>
+    <label for="href-input">URL:</label>
+    <input type="text" id="href-input" placeholder="e.g., https://www.cnn.com">
+    <br><br>
+    <button id="copy-button">Copy to Clipboard</button>
+</div>
+
+<script src="suggestion.js"></script>
+
+<script>
+  const searchInput = document.getElementById('search-input');
+  const autocompleteList = document.getElementById('autocomplete-list');
+  let currentFocus = -1;
+
+  searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    if (query.length === 0) {
+      autocompleteList.classList.add('hidden');
+      currentFocus = -1;
+      return;
+    }
+    const filteredSuggestions = suggestions.filter(item =>
+      item.name.toLowerCase().includes(query)
+    );
+    displaySuggestions(filteredSuggestions);
+
+    if (filteredSuggestions.length > 0) {
+      currentFocus = 0;
+      const items = autocompleteList.querySelectorAll('li');
+      addActive(items);
+    } else {
+      currentFocus = -1;
+    }
+  });
+
+  searchInput.addEventListener('keydown', function(event) {
+    const items = autocompleteList.querySelectorAll('li');
+    if (items.length === 0) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      currentFocus++;
+      if (currentFocus >= items.length) currentFocus = 0;
+      addActive(items);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      currentFocus--;
+      if (currentFocus < 0) currentFocus = items.length - 1;
+      addActive(items);
+    } else if (event.key === 'Enter' || event.key === 'Tab') {
+      event.preventDefault();
+      if (currentFocus > -1) {
+        selectSuggestion(items[currentFocus]);
+      } else if (items.length > 0) {
+        selectSuggestion(items[0]);
+      }
+    }
+  });
+
+  searchInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      autocompleteList.classList.add('hidden');
+      currentFocus = -1;
+    }, 200);
+  });
+
+  searchInput.addEventListener('focus', function() {
+    if (this.value.length > 0) {
+      searchInput.dispatchEvent(new Event('input'));
+    }
+  });
+
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+      searchInput.value = '';
+    }
+  });
+
+  function displaySuggestions(results) {
+    autocompleteList.innerHTML = '';
+    if (results.length > 0) {
+      results.forEach(result => {
+        const listItem = document.createElement('li');
+        listItem.textContent = result.name;
+        listItem.addEventListener('click', function() {
+          selectSuggestion(this);
+        });
+        autocompleteList.appendChild(listItem);
+      });
+      autocompleteList.classList.remove('hidden');
+    } else {
+      autocompleteList.classList.add('hidden');
+    }
+  }
+
+  function selectSuggestion(element) {
+    if (!element) return;
+    const selectedName = element.textContent;
+    autocompleteList.classList.add('hidden');
+
+    const selectedSuggestion = suggestions.find(s => s.name === selectedName);
+    if (selectedSuggestion) {
+      searchInput.value = '';
+      window.location.href = selectedSuggestion.href;
+    }
+  }
+
+  function addActive(items) {
+    removeActive(items);
+    if (!items[currentFocus]) return;
+    items[currentFocus].classList.add('selected');
+  }
+
+  function removeActive(items) {
+    for (let i = 0; i < items.length; i++) {
+      items[i].classList.remove('selected');
+    }
+  }
+
+  searchInput.focus();
+</script>
+
+<script>
+    const nameInput = document.getElementById('name-input');
+    const hrefInput = document.getElementById('href-input');
+    const copyButton = document.getElementById('copy-button');
+
+    copyButton.addEventListener('click', () => {
+        const name = nameInput.value;
+        const href = hrefInput.value;
+
+        if (name && href) {
+            if (!href.startsWith('http://') && !href.startsWith('https://')) {
+                alert('URL must start with http:// or https://');
+                return;
+            }
+
+            const suggestionObject = [{
+                name: name,
+                href: href
+            }];
+            const suggestionString = `const suggestions = ${JSON.stringify(suggestionObject, null, 4)};`;
+
+            const textArea = document.createElement('textarea');
+            textArea.value = suggestionString;
+            textArea.style.position = 'fixed';
+            textArea.style.top = '-9999px';
+            textArea.style.left = '-9999px';
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    copyButton.textContent = 'Copied!';
+                } else {
+                    copyButton.textContent = 'Failed to copy';
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                copyButton.textContent = 'Error';
+            }
+
+            document.body.removeChild(textArea);
+
+            setTimeout(() => {
+                copyButton.textContent = 'Copy to Clipboard';
+            }, 2000);
+
+        } else {
+            alert('Please fill in both fields.');
+        }
+    });
+</script>
+
+</body>
+</html>
